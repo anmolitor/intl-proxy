@@ -1,14 +1,13 @@
-module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt)
+module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, formatDateTime)
 
 {-| CodeGen for Intl functions. The Intl API will be given access to by a Proxy Object injected into the Elm Runtime via Flags.
 This mechanism makes it possible to have synchronous communication with JS. In order to avoid a lot of methods on the JS side,
 we are using a eval-like mechanism: We pass the information which Sub API to call and with which arguments as a JSON string.
 
-@docs Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt
+@docs Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime
 
 -}
 
-import Dict exposing (Dict)
 import Json.Decode as D
 import Json.Encode as E
 import Time
@@ -125,6 +124,51 @@ formatNumber encodeNum intl opts =
         encodedOptions : E.Value
         encodedOptions =
             encodeArgs [ E.string "NumberFormat", formatNumberArgs, E.string "format", encodeArgs [ encodeNum opts.number ] ]
+    in
+    fromIntlField intl encodedOptions
+        |> Maybe.withDefault "other"
+
+
+{-| Options for the `formatDate` function.
+
+`args` can consist of any object entries you want to pass to the DateTimeFormat constructor.
+The following serves as a hint to what is actually valid and will not result in an error:
+
+    - timeZone: String, implementation specific. UTC is the default and works for all implementations. Stuff like Asia/Shanghai could work depending on browser.
+    - hour12: Bool, determines whether AM/PM or 24h format should be used.
+    - hourCycle: "h11", "h12", "h23" or "h24". Overrides the hour12 argument.
+    - weekday: "narrow", "short or "long"
+    - era: "narrow", "short or "long"
+    - year: "numeric" or "2-digit"
+    - month: "numeric", "2-digit", "narrow", "short or "long"
+    - day: "numeric" or "2-digit"
+    - hour: "numeric" or "2-digit"
+    - minute: "numeric" or "2-digit"
+    - second: "numeric" or "2-digit"
+    - timeZoneName: "short" or "long"
+
+-}
+type alias FormatDateTimeOptions =
+    { time : Time.Posix
+    , args : List ( String, E.Value )
+    , language : String
+    }
+
+
+{-| Format a Posix Time with the given Options
+-}
+formatDateTime : Intl -> FormatDateTimeOptions -> String
+formatDateTime intl opts =
+    let
+        formatDateTimeArgs =
+            encodeArgs <|
+                [ E.string opts.language
+                , E.object opts.args
+                ]
+
+        encodedOptions : E.Value
+        encodedOptions =
+            encodeArgs [ E.string "DateTimeFormat", formatDateTimeArgs, E.string "format", encodeArgs [ E.int <| Time.posixToMillis opts.time ] ]
     in
     fromIntlField intl encodedOptions
         |> Maybe.withDefault "other"
