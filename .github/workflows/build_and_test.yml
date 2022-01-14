@@ -20,6 +20,10 @@ jobs:
       - uses: justgook/setup-elm@1.2.0
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Build
+        run: |
+          npm ci
+          npm run build
       - name: npm publish
         if: ${{ github.event_name == 'push' }}
         run: |

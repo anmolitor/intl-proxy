@@ -1,9 +1,9 @@
-const wrap = (fun) =>
+const wrap = (fun: (arg: string) => any) =>
   new Proxy(
     {},
     {
       get(_target, arg) {
-        return fun(arg);
+        return fun(arg as string);
       },
       has(_target, _arg) {
         return true;
@@ -14,11 +14,13 @@ const wrap = (fun) =>
 /**
  * An object enabling access to the Intl API via JSON. *
  * */
-export default intl_proxy = wrap((json) => {
+const intl_proxy = wrap((json) => {
   try {
     const [api, apiArgs, method, methodArgs] = JSON.parse(json);
-    return new Intl[api](...apiArgs)[method](...methodArgs);
+    return new (Intl as any)[api](...apiArgs)[method](...methodArgs);
   } catch (_e) {
     return undefined;
   }
 });
+
+export default intl_proxy;

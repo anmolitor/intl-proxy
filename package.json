@@ -1,13 +1,18 @@
 {
   "name": "intl-proxy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Provides access to the Browsers Intl Api via a Proxy Object. Designed to be used with the accompanying Elm package.",
-  "main": "index.js",
-  "scripts": {},
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
   "keywords": [
     "Intl",
     "Elm"
   ],
   "author": "Andreas Molitor",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  }
 }
