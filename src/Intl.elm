@@ -1,4 +1,4 @@
-module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, formatDateTime)
+module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, formatDateTime, FormatDateTimeOptions)
 
 {-| CodeGen for Intl functions. The Intl API will be given access to by a Proxy Object injected into the Elm Runtime via Flags.
 This mechanism makes it possible to have synchronous communication with JS. In order to avoid a lot of methods on the JS side,
