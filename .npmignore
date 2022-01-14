@@ -3,4 +3,5 @@ node_modules/
 src/
 
 elm.json
+tsconfig.json
 index.ts
