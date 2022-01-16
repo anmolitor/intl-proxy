@@ -1,10 +1,10 @@
-module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, formatDateTime, FormatDateTimeOptions)
+module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime, unsafeAccess)
 
 {-| CodeGen for Intl functions. The Intl API will be given access to by a Proxy Object injected into the Elm Runtime via Flags.
 This mechanism makes it possible to have synchronous communication with JS. In order to avoid a lot of methods on the JS side,
 we are using a eval-like mechanism: We pass the information which Sub API to call and with which arguments as a JSON string.
 
-@docs Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime
+@docs Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime, unsafeAccess
 
 -}
 
@@ -175,6 +175,14 @@ formatDateTime intl opts =
 
 
 fromIntlField : Intl -> E.Value -> Maybe String
-fromIntlField intl encodedField =
-    D.decodeValue (D.field (E.encode 0 encodedField) D.string) intl
-        |> Result.toMaybe
+fromIntlField intl =
+    E.encode 0 >> unsafeAccess intl
+
+
+{-| Use only if you know what you are doing! Accesses the Intl object directly which can be more efficient
+if you only want to relay json strings instead of decoding and encoding dicts in Elm. Also provides access to APIs that are not wrapped
+in a more typesafe way by this package yet.
+-}
+unsafeAccess : Intl -> String -> Maybe String
+unsafeAccess intl json =
+    D.decodeValue (D.field json D.string) intl |> Result.toMaybe
