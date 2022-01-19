@@ -1,10 +1,13 @@
-module Intl exposing (Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime, unsafeAccess)
+module Intl exposing
+    ( Intl, decode, PluralRule(..), PluralType(..), PluralOptions, determinePluralRuleInt, determinePluralRuleFloat, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime, unsafeAccess
+    , pluralRuleFromString, pluralRuleToString
+    )
 
 {-| CodeGen for Intl functions. The Intl API will be given access to by a Proxy Object injected into the Elm Runtime via Flags.
 This mechanism makes it possible to have synchronous communication with JS. In order to avoid a lot of methods on the JS side,
 we are using a eval-like mechanism: We pass the information which Sub API to call and with which arguments as a JSON string.
 
-@docs Intl, decode, PluralOptions, plural, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime, unsafeAccess
+@docs Intl, decode, PluralRule, pluralRuleToString, pluralRuleFromString, PluralType, PluralOptions, determinePluralRuleInt, determinePluralRuleFloat, FormatNumberOptions, formatFloat, formatInt, FormatDateTimeOptions, formatDateTime, unsafeAccess
 
 -}
 
@@ -26,6 +29,8 @@ decode =
     D.value
 
 
+{-| Cardinal: Semantics of amount, Ordinal: Semantics of ranking (think 1st, 2nd ...)
+-}
 type PluralType
     = Cardinal
     | Ordinal
@@ -40,20 +45,94 @@ type alias PluralOptions number =
     }
 
 
-encodeArgs : List E.Value -> E.Value
-encodeArgs =
-    E.list identity
+{-| The different plural rules. Depending on language, you might only have two of these like English (one, other) or all 6.
+-}
+type PluralRule
+    = Zero
+    | One
+    | Two
+    | Few
+    | Many
+    | Other
+
+
+{-| Parse a `PluralRule` from a `String`. This is written so it is compatible with the return values of the Intl API.
+-}
+pluralRuleFromString : String -> Maybe PluralRule
+pluralRuleFromString str =
+    case str of
+        "zero" ->
+            Just Zero
+
+        "one" ->
+            Just One
+
+        "two" ->
+            Just Two
+
+        "few" ->
+            Just Few
+
+        "many" ->
+            Just Many
+
+        "other" ->
+            Just Other
+
+        _ ->
+            Nothing
+
+
+{-| Convert a `PluralRule` to its `String` representation. This is written so it is compatible with the return values of the Intl API.
+-}
+pluralRuleToString : PluralRule -> String
+pluralRuleToString rule =
+    case rule of
+        Zero ->
+            "zero"
+
+        One ->
+            "one"
+
+        Two ->
+            "two"
+
+        Few ->
+            "few"
+
+        Many ->
+            "many"
+
+        Other ->
+            "other"
 
 
 {-| Determine the CLDR plural category (see <https://www.unicode.org/cldr/cldr-aux/charts/30/supplemental/language_plural_rules.html>)
-for a given number and language.
+for a given `Int` and language.
 
 The possible categories are: `zero`, `one`, `two`, `few`, `many`, and `other`.
 When the category cannot be determined for whatever reason, this function will default to "other".
 
 -}
-plural : Intl -> PluralOptions Int -> String
-plural intl opts =
+determinePluralRuleInt : Intl -> PluralOptions Int -> PluralRule
+determinePluralRuleInt =
+    determinePluralRule E.int
+
+
+{-| Determine the CLDR plural category (see <https://www.unicode.org/cldr/cldr-aux/charts/30/supplemental/language_plural_rules.html>)
+for a given `Float` and language.
+
+The possible categories are: `zero`, `one`, `two`, `few`, `many`, and `other`.
+When the category cannot be determined for whatever reason, this function will default to "other".
+
+-}
+determinePluralRuleFloat : Intl -> PluralOptions Float -> PluralRule
+determinePluralRuleFloat =
+    determinePluralRule E.float
+
+
+determinePluralRule : (number -> E.Value) -> Intl -> PluralOptions number -> PluralRule
+determinePluralRule encodeNum intl opts =
     let
         pluralArgs =
             encodeArgs <|
@@ -69,10 +148,11 @@ plural intl opts =
 
         encodedOptions : E.Value
         encodedOptions =
-            encodeArgs [ E.string "PluralRules", pluralArgs, E.string "select", encodeArgs [ E.int opts.number ] ]
+            encodeArgs [ E.string "PluralRules", pluralArgs, E.string "select", encodeArgs [ encodeNum opts.number ] ]
     in
     fromIntlField intl encodedOptions
-        |> Maybe.withDefault "other"
+        |> Maybe.andThen pluralRuleFromString
+        |> Maybe.withDefault Other
 
 
 {-| Options for the `formatInt` and `formatFloat` functions.
@@ -126,7 +206,7 @@ formatNumber encodeNum intl opts =
             encodeArgs [ E.string "NumberFormat", formatNumberArgs, E.string "format", encodeArgs [ encodeNum opts.number ] ]
     in
     fromIntlField intl encodedOptions
-        |> Maybe.withDefault "other"
+        |> Maybe.withDefault ""
 
 
 {-| Options for the `formatDate` function.
@@ -171,7 +251,12 @@ formatDateTime intl opts =
             encodeArgs [ E.string "DateTimeFormat", formatDateTimeArgs, E.string "format", encodeArgs [ E.int <| Time.posixToMillis opts.time ] ]
     in
     fromIntlField intl encodedOptions
-        |> Maybe.withDefault "other"
+        |> Maybe.withDefault ""
+
+
+encodeArgs : List E.Value -> E.Value
+encodeArgs =
+    E.list identity
 
 
 fromIntlField : Intl -> E.Value -> Maybe String

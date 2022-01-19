@@ -3,7 +3,7 @@
     "name": "andreasewering/intl-proxy",
     "summary": "Provides access to the Browsers Intl Api via a JS Proxy Object",
     "license": "MIT",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "exposed-modules": [
         "Intl"
     ],
