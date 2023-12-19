@@ -1,7 +1,5 @@
 # Intl Proxy
 
-** MOVED TO https://package.elm-lang.org/packages/anmolitor/intl-proxy/latest/ **
-
 This is a package intended to be used combined with the accompanying JS/Elm package.
 You shouldn't need to use this package directly at all, but instead use the `Travelm-Agency` package
 to generate the code for you. 

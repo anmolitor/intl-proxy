@@ -1,9 +1,9 @@
 {
   "type": "package",
-  "name": "andreasewering/intl-proxy",
+  "name": "anmolitor/intl-proxy",
   "summary": "Provides access to the Browsers Intl Api via a JS Proxy Object",
   "license": "MIT",
-  "version": "2.0.1",
+  "version": "1.0.0",
   "exposed-modules": ["Intl"],
   "elm-version": "0.19.0 <= v < 0.20.0",
   "dependencies": {
